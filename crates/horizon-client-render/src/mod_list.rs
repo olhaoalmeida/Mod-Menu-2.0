@@ -33,11 +33,15 @@ pub struct ModList {
 }
 
 /// One installed mod as the Mods page shows it.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct Installed {
     pub id: String,
     /// `Name 1.0` (the file name when the manifest is unreadable).
     pub title: String,
+    /// Its version alone (`1.0`), "" when unknown.
+    pub version: String,
+    /// Its authors, none when unknown.
+    pub authors: Vec<String>,
     pub description: String,
     /// Why it is not running, when it failed.
     pub problem: Option<String>,
@@ -181,6 +185,7 @@ mod tests {
             problem: None,
             dev,
             native: None,
+            ..Default::default()
         };
         let mut list = ModList {
             installed: vec![installed("a", false), installed("b", true)],

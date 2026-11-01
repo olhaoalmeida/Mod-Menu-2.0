@@ -9,6 +9,7 @@
 //! API 62 adds nicknames for server mods: `native_set_nickname` shows a name in place of a player's in chat and
 //! the Tab list (the real one on hover), and `native_text_allowed` asks the server's chat filter, in
 //! `native_server.rs`.
+//! API 63 adds `version` and `authors` to `NativeMod`: Options > Mods can show them. Both optional.
 //!
 //! API 61 adds mods' own sound events in `native_play_sound`: another
 //! namespace's event is sent by name, as vanilla sends an unregistered sound.
@@ -268,7 +269,7 @@ pub(super) use horizon_world::level::flags;
 /// The hook points' API version. The launcher reads this line from the
 /// source it builds; keep its form.
 #[allow(dead_code)]
-pub(crate) const NATIVE_HOOKS_API: u32 = 62;
+pub(crate) const NATIVE_HOOKS_API: u32 = 63;
 
 impl GameLevel<'_> {
     /// An authoritative server committed a changed state through `Level.setBlock`.
@@ -584,6 +585,10 @@ pub(crate) struct NativeMod {
     pub(crate) id: String,
     /// `Name 1.0`.
     pub(crate) title: String,
+    /// Its version alone (`1.0`), or "". API 63.
+    pub(crate) version: String,
+    /// Its authors, if any. API 63.
+    pub(crate) authors: Vec<String>,
     pub(crate) description: String,
     /// Its keys: name, label and default key (`key.keyboard.z`). The page
     /// lists them first; `native_mod_key` reads the player's choice.
@@ -3042,10 +3047,13 @@ impl Game<'_> {
             self.settings.mods.installed.push(Installed {
                 id: m.id,
                 title: m.title,
+                version: m.version,
+                authors: m.authors,
                 description: m.description,
                 problem: None,
                 dev: false,
                 native: Some(page),
+                ..Default::default()
             });
         }
     }

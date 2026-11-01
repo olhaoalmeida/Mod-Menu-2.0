@@ -144,6 +144,7 @@ fn not_built(dir: &std::path::Path, built: &str, rows: &[Installed]) -> Vec<Inst
                 problem: Some(mod_list::NOT_BUILT.to_owned()),
                 dev: false,
                 native: None,
+                ..Default::default()
             });
         }
     }
@@ -179,6 +180,7 @@ impl Game<'_> {
                             problem: Some(format!("Can't be read: {e}")),
                             dev: false,
                             native: None,
+                            ..Default::default()
                         };
                     }
                 };
@@ -187,10 +189,13 @@ impl Game<'_> {
                 Installed {
                     id: m.id.clone(),
                     title: format!("{} {}", m.name, m.version),
+                    version: m.version.clone(),
+                    authors: m.authors.clone(),
                     description: m.description.clone(),
                     problem,
                     dev: self.mods.dev.contains(path),
                     native: None,
+                    ..Default::default()
                 }
             })
             .collect();

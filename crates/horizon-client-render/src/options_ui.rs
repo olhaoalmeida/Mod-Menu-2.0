@@ -5142,6 +5142,7 @@ mod tests {
                 problem: id.is_empty().then(|| "Invalid package".into()),
                 dev,
                 native: None,
+                ..Default::default()
             });
         }
         let (widgets, ..) = ui.layout(&s, size.0, size.1);
@@ -5212,6 +5213,8 @@ mod tests {
                 buttons: vec!["Setting".into()],
                 ..Default::default()
             }),
+
+            ..Default::default()
         });
         ui.show(Page::Mods);
         let (widgets, ..) = ui.layout(&s, size.0, size.1);
@@ -5254,6 +5257,7 @@ mod tests {
             problem: None,
             dev: false,
             native: Some(crate::mod_list::NativePage::default()),
+            ..Default::default()
         });
         ui.show(Page::Mods);
         let (widgets, ..) = ui.layout(&s, 480.0, 240.0);
@@ -5309,6 +5313,7 @@ mod tests {
                 keys: vec![["zoom".into(), "Zoom key".into(), "key.keyboard.z".into()]],
                 buttons: Vec::new(),
             }),
+            ..Default::default()
         });
         ui.show(Page::NativeMod(0));
         let key_label = |ui: &mut OptionsUi, s: &Settings| {

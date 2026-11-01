@@ -1494,6 +1494,9 @@ pub struct OptionsUi {
     center_language: bool,
     pub graphics: crate::graphics_ui::GraphicsUi,
     pub split_profiles: crate::split_profiles::SplitProfiles,
+    /// The two-pane Mods page (`Extras::mod_menu`), and whether it replaces the Mods rows.
+    pub mod_menu: crate::mod_menu::ModMenu,
+    mod_menu_on: bool,
     /// HDR calibration while its page is open.
     pub calibration: Option<crate::hdr_calibration::Calibration>,
     /// Whether the window was fullscreen before calibration made it so (the game keeps it).
@@ -1550,6 +1553,8 @@ impl Default for OptionsUi {
             center_language: false,
             graphics: Default::default(),
             split_profiles: Default::default(),
+            mod_menu: Default::default(),
+            mod_menu_on: false,
             calibration: None,
             calibration_fullscreen: None,
             agent_status: Vec::new(),
@@ -2045,6 +2050,13 @@ impl OptionsUi {
         if page == Page::SplitProfiles {
             self.split_profiles.reset();
         }
+        if page == Page::Mods {
+            self.mod_menu.reset();
+        }
+    }
+    /// Whether the Mods page is the two-pane menu (the extra is on).
+    fn mod_menu_shown(&self) -> bool {
+        self.page() == Page::Mods && self.mod_menu_on
     }
     /// The graphics screen level of `page`, if it is one.
     fn graphics_level(page: Page) -> Option<crate::graphics_ui::Level> {
@@ -3232,6 +3244,12 @@ impl OptionsUi {
                 .draw(batch, atlas, cursor, self.in_world, self.pad_style);
             return;
         }
+        self.mod_menu_on = s.extras.mod_menu;
+        if self.mod_menu_shown() {
+            self.mod_menu
+                .draw(&s.mods, batch, atlas, cursor, self.in_world);
+            return;
+        }
         if self.page() == Page::Packs {
             self.watch_data_packs(atlas, (w, h));
             ui::menu_background(batch, atlas, 0.0, 0.0, w, h, self.in_world);
@@ -3535,6 +3553,30 @@ impl OptionsUi {
             return match self.split_profiles.click(atlas, (x, y), size) {
                 Click::Nothing => Vec::new(),
                 Click::Pressed => vec![Event::ButtonClick],
+                Click::Done => {
+                    let mut events = vec![Event::ButtonClick];
+                    events.extend(self.back(s));
+                    events
+                }
+            };
+        }
+        self.mod_menu_on = s.extras.mod_menu;
+        if self.mod_menu_shown() {
+            use crate::mod_menu::Click;
+            if right || drag {
+                return Vec::new();
+            }
+            return match self.mod_menu.click(&s.mods, atlas, (x, y), size) {
+                Click::Nothing => Vec::new(),
+                Click::Pressed => vec![Event::ButtonClick],
+                Click::Toggle(i) => {
+                    s.mods.toggle(i);
+                    vec![Event::ButtonClick, Event::Changed]
+                }
+                Click::Settings(i) => {
+                    self.push(Page::NativeMod(i));
+                    vec![Event::ButtonClick, Event::NativeSettings(i)]
+                }
                 Click::Done => {
                     let mut events = vec![Event::ButtonClick];
                     events.extend(self.back(s));
@@ -4249,6 +4291,8 @@ impl OptionsUi {
             self.scroll = 0.0;
         } else if self.page() == Page::SplitProfiles {
             self.split_profiles.type_text(text);
+        } else if self.mod_menu_shown() {
+            self.mod_menu.type_text(text);
         } else if self.settings_search_active() {
             self.settings_search.insert_text(text);
             self.scroll = 0.0;
@@ -4279,6 +4323,9 @@ impl OptionsUi {
         }
         if self.page() == Page::SplitProfiles {
             return self.split_profiles.shortcut(shortcut, clipboard);
+        }
+        if self.mod_menu_shown() {
+            return self.mod_menu.shortcut(shortcut, clipboard);
         }
         if self.settings_search_active() {
             if self.settings_search.shortcut(shortcut, clipboard) {
@@ -4388,6 +4435,12 @@ impl OptionsUi {
         }
         if self.page() == Page::SplitProfiles && self.split_profiles.key(key, text) {
             return Vec::new();
+        }
+        if self.mod_menu_shown() {
+            let size = (self.size.0.max(480.0), self.size.1.max(240.0));
+            if self.mod_menu.key(&s.mods.installed, size, key, text) {
+                return Vec::new();
+            }
         }
 
         if let Some(level) = Self::graphics_level(self.page()) {
